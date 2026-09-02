@@ -1,0 +1,46 @@
+version: 2
+
+updates:
+  # ---------------------------------------------------------------------------
+  # GitHub Actions. Every `uses:` in ci.yml is pinned to a full commit SHA with
+  # the version in a trailing comment — a mutable tag can be repointed by its
+  # owner. Dependabot understands that form and bumps the SHA and the comment
+  # together, which is the only thing that keeps a pinned workflow from sitting
+  # on an unpatched version forever.
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # ---------------------------------------------------------------------------
+  # The example plugin's own dev dependencies (lints, test). Its one runtime
+  # dependency is swayve_plugin_sdk, pinned by git commit — Dependabot does not
+  # bump a git ref, and it should not: that ref is bumped deliberately, in step
+  # with SWAYVE_PLUGINS_REF in ci.yml.
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: pub
+    directory: "/example"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "deps"

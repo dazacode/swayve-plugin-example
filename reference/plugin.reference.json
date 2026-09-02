@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 7,
+  "id": "dev.example.swayve.kitchen_sink",
+  "name": "Kitchen Sink",
+  "description": "Not a real plugin. A manifest that exercises every field the Swayve plugin schema defines, so you can see the shape of each one in a valid document rather than reading the schema.",
+  "version": "1.4.2",
+  "author": {
+    "name": "Example Developer",
+    "url": "https://example.com",
+    "email": "plugins@example.com"
+  },
+  "license": "Apache-2.0",
+  "swayvePluginApi": 1,
+  "minimumSwayveVersion": "0.1.0",
+  "runtime": "compiled",
+  "platforms": ["android", "ios", "windows", "macos", "linux"],
+  "capabilities": [
+    "search",
+    "catalog",
+    "streaming",
+    "metadata",
+    "artwork",
+    "playlist_read",
+    "radio",
+    "authentication",
+    "session_capture"
+  ],
+  "permissions": [
+    "network",
+    "webview",
+    "external_auth",
+    "local_plugin_storage"
+  ],
+  "entrypoint": "kitchen_sink",
+
+  "homepage": "https://example.com/swayve/kitchen-sink",
+  "repository": "https://github.com/example/swayve-kitchen-sink",
+  "icon": "assets/kitchen_sink.svg",
+
+  "source": {
+    "sourceId": "kitchen_sink",
+    "displayName": "Kitchen Sink",
+    "iconName": "cloud_music",
+    "contentTypes": ["songs", "albums", "artists"],
+    "availability": "signed_out",
+    "supportedHosts": ["kitchensink.example.com", "*.kitchensink.example.com"]
+  },
+
+  "media": {
+    "streamable": true,
+    "downloadable": false,
+    "offlineCache": true
+  },
+
+  "network": {
+    "hosts": [
+      "api.kitchensink.example.com",
+      "*.cdn.kitchensink.example.com"
+    ]
+  },
+
+  "timeouts": {
+    "requestMs": 10000,
+    "operationMs": 30000
+  },
+
+  "settings": [
+    {
+      "id": "server_url",
+      "type": "string",
+      "label": "Server address",
+      "description": "Where your library lives. Leave blank to use the public instance.",
+      "default": "https://api.kitchensink.example.com",
+      "required": false
+    },
+    {
+      "id": "prefer_lossless",
+      "type": "bool",
+      "label": "Prefer lossless",
+      "description": "Request the highest quality the account allows. Uses more data.",
+      "default": true
+    },
+    {
+      "id": "page_size",
+      "type": "int",
+      "label": "Items per page",
+      "description": "How many results to fetch at a time.",
+      "default": 50,
+      "min": 10,
+      "max": 200
+    },
+    {
+      "id": "region",
+      "type": "select",
+      "label": "Catalogue region",
+      "description": "Which regional catalogue to browse.",
+      "default": "us",
+      "options": [
+        { "value": "us", "label": "United States" },
+        { "value": "gb", "label": "United Kingdom" },
+        { "value": "jp", "label": "Japan" }
+      ]
+    },
+    {
+      "id": "session_cookie",
+      "type": "secret",
+      "label": "Session cookie",
+      "description": "Written by the sign-in flow below. You do not need to fill this in by hand.",
+      "required": true
+    }
+  ],
+
+  "session_capture": {
+    "hosts": ["kitchensink.example.com", "*.kitchensink.example.com"],
+    "capture": [
+      {
+        "from": "cookie_header",
+        "as_secret": "session_cookie"
+      }
+    ]
+  },
+
+  "keywords": ["reference", "kitchen-sink", "every-field", "documentation"]
+}

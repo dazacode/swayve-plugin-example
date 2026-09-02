@@ -1,0 +1,101 @@
+name: ci
+
+# The reference plugin has to be correct, or it teaches the wrong thing. This
+# runs the same four checks AGENTS.md tells an agent to run before calling a
+# plugin finished: validate strictly, format, analyze, test — plus a schema
+# check of the reference manifest, which has no tests of its own to catch it.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Nothing here writes anything back.
+permissions:
+  contents: read
+
+env:
+  # Pinned so a Dart point release can never silently change formatter output.
+  DART_SDK_VERSION: "3.13.0"
+  # The swayve-plugins commit this plugin is developed against. Kept equal to
+  # the `ref` in example/pubspec.yaml on purpose: CI validating against a
+  # different SDK than the plugin compiles against is how a green build starts
+  # lying. Bump both together.
+  SWAYVE_PLUGINS_REF: 3d1ffa237bfc7c0b3f7acb0651682fc9448e5bbd
+
+jobs:
+  validate:
+    name: validate the manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: plugin
+          persist-credentials: false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: dazacode/swayve-plugins
+          path: swayve-plugins
+          ref: ${{ env.SWAYVE_PLUGINS_REF }}
+          persist-credentials: false
+
+      - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
+        with:
+          sdk: ${{ env.DART_SDK_VERSION }}
+
+      - name: dart pub get (swayve-plugins tools)
+        working-directory: swayve-plugins
+        run: dart pub get
+
+      - name: Validate the example plugin (strict — warnings are errors)
+        run: dart run swayve-plugins/tools/validate_plugin.dart plugin/example --strict
+
+      - name: Validate the reference manifest against the published schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          # An independent draft 2020-12 checker rather than our own validator:
+          # reference/plugin.reference.json is not a plugin directory, so the
+          # validator will not look at it, and it is precisely the document
+          # people copy fields out of. It has to be schema-correct.
+          python3 -m venv "$RUNNER_TEMP/schema-venv"
+          "$RUNNER_TEMP/schema-venv/bin/pip" install --quiet --disable-pip-version-check check-jsonschema
+          "$RUNNER_TEMP/schema-venv/bin/check-jsonschema" \
+            --schemafile swayve-plugins/schema/swayve-plugin.schema.json \
+            plugin/reference/plugin.reference.json
+
+  test:
+    name: format, analyze, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
+        with:
+          sdk: ${{ env.DART_SDK_VERSION }}
+
+      # pub get first, and every step below runs from inside the package: the
+      # formatter reads the package's language version to decide its style, and
+      # it can only resolve that once .dart_tool/package_config.json exists.
+      # Formatting from outside the package silently applies a different style.
+      - name: pub get
+        working-directory: example
+        run: dart pub get
+
+      - name: dart format --set-exit-if-changed
+        working-directory: example
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: analyze --fatal-infos
+        working-directory: example
+        run: dart analyze --fatal-infos .
+
+      - name: dart test
+        working-directory: example
+        run: dart test

@@ -1,0 +1,25 @@
+# Lint baseline for the reference plugin.
+#
+# Self-contained on purpose. A plugin kept alongside others usually inherits a
+# repo-wide baseline with `include: ../analysis_options.yaml`; a standalone
+# plugin has no parent to inherit from, and neither will yours when you copy
+# this directory somewhere else. The rules below are that baseline, inlined —
+# so this plugin is analysis-clean on its own rather than carrying a dangling
+# relative include.
+#
+# `public_member_api_docs` is deliberately NOT enabled. The SDK enables it for
+# its own members, which are a third-party API surface; a plugin's members are
+# not, and turning it on here would be noise.
+include: package:lints/recommended.yaml
+
+analyzer:
+  errors:
+    todo: ignore
+
+linter:
+  rules:
+    - always_declare_return_types
+    - avoid_print
+    - prefer_final_locals
+    - require_trailing_commas
+    - unawaited_futures
